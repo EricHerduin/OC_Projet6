@@ -2,7 +2,6 @@ require("dotenv").config();
 const constante = require("../constante");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-// const costFactor = 10;
 const User = require("../models/users");
 
 exports.signup = (req, res, next) => {

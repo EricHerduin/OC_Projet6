@@ -1,6 +1,4 @@
-// import dotenv from "dotenv";
 require("dotenv").config();
-// import jwt from "jsonwebtoken";
 const jwt = require("jsonwebtoken");
 
 module.exports = (req, res, next) => {
