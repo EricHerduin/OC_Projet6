@@ -1,14 +1,18 @@
+// require("dotenv").config();
+// import dotenv from "dotenv";
+// dotenv.config();
+require("dotenv").config();
 const express = require("express");
-const bodyParser = require("body-Parser");
 const mongoose = require("mongoose");
 const app = express();
 const sauceRoutes = require("./routes/sauces");
 const userRoutes = require("./routes/users");
+const path = require("path");
 
 // Connection Mongoose
 mongoose
   .connect(
-    "mongodb+srv://EricHdn:MDBGOfilyta26@cluster0.zdgr5vh.mongodb.net/projet6Data?retryWrites=true&w=majority",
+    `mongodb+srv://${process.env.mongoLogin}:${process.env.mongoPassWord}@cluster0.zdgr5vh.mongodb.net/projet6Data?retryWrites=true&w=majority`,
     { useNewUrlParser: true, useUnifiedTopology: true }
   )
   .then(() => console.log("Connexion à MongoDB réussie !"))
@@ -23,14 +27,15 @@ app.use((req, res, next) => {
   );
   res.setHeader(
     "Access-Control-Allow-Methods",
-    "GET, POST, PUT, DELETE, PATCH"
+    "GET, POST, PUT, DELETE, PATCH, OPTIONS"
   );
   next();
 });
 
 // lancement d'express
 app.use(express.json());
-// app.use(bodyParser.json());
+app.use("/images", express.static(path.join(__dirname, "images")));
+app.use(express.static(__dirname + "/images"));
 
 //logique de routes
 app.use("/api/auth", userRoutes);
