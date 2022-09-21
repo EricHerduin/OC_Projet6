@@ -1,15 +1,18 @@
 require("dotenv").config();
-const constante = require("../constante");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../models/users");
+const factor = "10";
 
 exports.signup = (req, res, next) => {
+  const passwordUser = req.body.password;
+  const emailUser = req.body.email;
+
   bcrypt
-    .hash(req.body.password, constante[costFactor])
+    .hash(passwordUser, factor)
     .then((hash) => {
       const user = new User({
-        email: req.body.email,
+        email: emailUser,
         password: hash,
       });
       user
@@ -21,7 +24,9 @@ exports.signup = (req, res, next) => {
 };
 
 exports.login = (req, res, next) => {
-  User.findOne({ email: req.body.email })
+  const passwordUser = req.body.password;
+  const emailUser = req.body.email;
+  User.findOne({ email: emailUser })
     .then((user) => {
       if (!user) {
         res
@@ -29,7 +34,7 @@ exports.login = (req, res, next) => {
           .json({ message: "indentifiants/Mot de passe incorrect" });
       }
       bcrypt
-        .compare(req.body.password, user.password)
+        .compare(passwordUser, user.password)
         .then((valid) => {
           if (!valid) {
             res.status(401).json({
