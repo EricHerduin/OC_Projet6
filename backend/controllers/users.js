@@ -2,25 +2,37 @@ require("dotenv").config();
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../models/users");
-const factor = "10";
+const factor = 10;
 
 exports.signup = (req, res, next) => {
   const passwordUser = req.body.password;
   const emailUser = req.body.email;
-
-  bcrypt
-    .hash(passwordUser, factor)
-    .then((hash) => {
-      const user = new User({
-        email: emailUser,
-        password: hash,
+  const formatMail = /^([a-zA-Z0-9._%-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6})*$/;
+  const formatPassword = /(?=(.*[0-9]))((?=.*[A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z]))^.{8,}$/;
+  if (!formatMail.test(emailUser)) {
+    res.status(400).json({ message: "format d'adresse mail incorrect" });
+  } else {
+    if (formatPassword.test(passwordUser) == true) {
+      bcrypt
+        .hash(passwordUser, factor)
+        .then((hash) => {
+          const user = new User({
+            email: emailUser,
+            password: hash,
+          });
+          user
+            .save()
+            .then(() => res.status(201).json({ message: "utilisateur créé" }))
+            .catch((error) => res.status(400).json({ error }));
+        })
+        .catch((error) => res.status(500).json({ error }));
+    } else {
+      res.status(400).json({
+        message:
+          "Mot de passe doit comporter 1 Majuscule - 1 minuscule - 1 chiffre - 8 caractères",
       });
-      user
-        .save()
-        .then(() => res.status(201).json({ message: "utilisateur créé" }))
-        .catch((error) => res.status(400).json({ error }));
-    })
-    .catch((error) => res.status(500).json({ error }));
+    }
+  }
 };
 
 exports.login = (req, res, next) => {
