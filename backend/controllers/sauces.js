@@ -1,5 +1,7 @@
 const Sauce = require("../models/sauces");
+require("express");
 const fs = require("fs");
+const decode = require("../general");
 
 exports.createSauce = (req, res, next) => {
   const sauceObject = JSON.parse(req.body.sauce);
@@ -8,6 +10,10 @@ exports.createSauce = (req, res, next) => {
   const sauce = new Sauce({
     ...sauceObject,
     userId: req.auth.userId,
+    name: decode.htmlspecialchars(sauceObject.name.trim()),
+    manufacturer: decode.htmlspecialchars(sauceObject.manufacturer.trim()),
+    mainPepper: decode.htmlspecialchars(sauceObject.mainPepper.trim()),
+    description: decode.htmlspecialchars(sauceObject.description.trim()),
     imageUrl: `${req.protocol}://${req.get("host")}/images/${
       req.file.filename
     }`,
@@ -25,18 +31,34 @@ exports.modifySauce = (req, res, next) => {
       if (sauce.userId != req.auth.userId) {
         res.status(401).json({ message: "modification non autorisée" });
       } else {
-        const sauceObject = req.file
+        // const sauceObject = JSON.parse(req.body.sauce);
+        const sauceObject = req.body;
+        const sauceObjectUpdate = req.file
           ? {
               ...JSON.parse(req.body.sauce),
               imageUrl: `${req.protocol}://${req.get("host")}/images/${
                 req.file.filename
               }`,
             }
-          : { ...req.body };
-        delete sauceObject.userId;
+          : {
+              ...sauceObject,
+              name: decode.htmlspecialchars(sauceObject.name.trim()),
+              manufacturer: decode.htmlspecialchars(
+                sauceObject.manufacturer.trim()
+              ),
+              mainPepper: decode.htmlspecialchars(
+                sauceObject.mainPepper.trim()
+              ),
+              description: decode.htmlspecialchars(
+                sauceObject.description.trim()
+              ),
+            };
+
+        delete sauceObjectUpdate.userId;
+
         Sauce.updateOne(
           { _id: req.params._id },
-          { ...sauceObject, _id: req.params._id }
+          { ...sauceObjectUpdate, _id: req.params._id }
         )
           .then(() => res.status(201).json({ message: "objet modifié" }))
           .catch((error) => res.status(401).json({ error }));
@@ -71,6 +93,14 @@ exports.getOneSauce = (req, res, next) => {
       if (!sauce) {
         res.status(404).json({ message: "produit non trouvé" });
       } else {
+        sauce = {
+          ...sauce._doc,
+          name: decode.htmlspecialchars_decode(sauce.name),
+          description: decode.htmlspecialchars_decode(sauce.description),
+          mainPepper: decode.htmlspecialchars_decode(sauce.mainPepper),
+          manufacturer: decode.htmlspecialchars_decode(sauce.manufacturer),
+        };
+
         res.status(200).json(sauce);
       }
     })
@@ -80,6 +110,20 @@ exports.getOneSauce = (req, res, next) => {
 
 exports.getAllSauce = (req, res, next) => {
   Sauce.find()
-    .then((sauces) => res.status(200).json(sauces))
+    .then((sauces) => {
+      let getSauces = [];
+      for (i = 0; i < sauces.length; i++) {
+        const getSauce = {
+          ...sauces[i]._doc,
+          name: decode.htmlspecialchars_decode(sauces[i].name),
+          description: decode.htmlspecialchars_decode(sauces[i].description),
+          mainPepper: decode.htmlspecialchars_decode(sauces[i].mainPepper),
+          manufacturer: decode.htmlspecialchars_decode(sauces[i].manufacturer),
+        };
+        getSauces.push(getSauce);
+      }
+
+      res.status(200).json(getSauces);
+    })
     .catch((error) => res.status(500).json({ error }));
 };
